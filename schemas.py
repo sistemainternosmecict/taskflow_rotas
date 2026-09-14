@@ -53,3 +53,42 @@ class UnidadeResponse(UnidadeBase):
     updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class PontoPartidaPayload(BaseModel):
+    plus_code: str = Field(
+        ...,
+        min_length=2,
+        max_length=60,
+        description="Plus Code do ponto de partida (ex: 4GHP+97 ou 4G3P+JM Saquarema, RJ).",
+        examples=["4G3P+JM"],
+    )
+    descricao: Optional[str] = Field(
+        None,
+        max_length=255,
+        description="Descrição opcional do ponto de partida (ex: Secretaria Municipal de Educação / Garagem).",
+        examples=["Secretaria Municipal de Educação"],
+    )
+
+
+class PontoPartidaResponse(BaseModel):
+    plus_code: str = Field(
+        ...,
+        description="Plus Code do ponto de partida configurado.",
+        examples=["4G3P+JM"],
+    )
+    ponto_partida: str = Field(
+        ...,
+        description="Alias com o mesmo Plus Code para fácil consumo pelo frontend.",
+        examples=["4G3P+JM"],
+    )
+    descricao: Optional[str] = Field(
+        None,
+        description="Descrição ou identificação do ponto de partida.",
+        examples=["Secretaria Municipal de Educação"],
+    )
+    updated_at: Optional[datetime] = Field(
+        None,
+        description="Data e hora da última atualização.",
+    )
+

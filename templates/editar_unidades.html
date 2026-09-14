@@ -43,6 +43,104 @@
         </div>
         {% endif %}
 
+        <!-- Card de Configuração: Ponto de Partida (Origem das Rotas) -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between pb-4 mb-4 border-b border-slate-100 gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold text-lg">
+                        <i class="fa-solid fa-location-crosshairs"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                            Ponto de Partida das Rotas
+                            <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                Ponto de Origem
+                            </span>
+                        </h2>
+                        <p class="text-xs text-slate-500">
+                            Defina o Plus Code do local de partida (sede, garagem ou ponto inicial) para cálculo de distâncias no frontend.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Endpoint REST Badge -->
+                <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-600">
+                    <span class="text-slate-400 font-mono font-semibold">GET</span>
+                    <code class="font-mono text-indigo-600 font-semibold" id="apiEndpointText">/api/v1/ponto-partida</code>
+                    <button 
+                        type="button" 
+                        onclick="copiarEndpointApi()" 
+                        class="text-slate-400 hover:text-indigo-600 transition" 
+                        title="Copiar rota da API para usar no Frontend"
+                    >
+                        <i class="fa-regular fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <form 
+                action="/configuracoes/ponto-partida" 
+                method="POST" 
+                id="formPontoPartida" 
+                onsubmit="salvarPontoPartidaAjax(event)"
+                class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end"
+            >
+                <div class="sm:col-span-5">
+                    <label for="pontoPartidaInput" class="block text-xs font-semibold text-slate-700 mb-1">
+                        Plus Code do Ponto de Partida <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                            <i class="fa-solid fa-qrcode"></i>
+                        </span>
+                        <input 
+                            type="text" 
+                            name="plus_code" 
+                            id="pontoPartidaInput" 
+                            value="{{ ponto_partida.plus_code if ponto_partida else '' }}" 
+                            placeholder="Ex: 4G3P+JM ou 4G3P+JM Saquarema, RJ" 
+                            class="w-full pl-9 pr-3 py-2 bg-slate-50 font-mono text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition focus:bg-white"
+                            required
+                        >
+                    </div>
+                </div>
+
+                <div class="sm:col-span-4">
+                    <label for="pontoPartidaDesc" class="block text-xs font-semibold text-slate-700 mb-1">
+                        Identificação / Descrição <span class="text-slate-400 font-normal">(opcional)</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        name="descricao" 
+                        id="pontoPartidaDesc" 
+                        value="{{ ponto_partida.descricao if ponto_partida else '' }}" 
+                        placeholder="Ex: Sede da Secretaria de Educação" 
+                        class="w-full px-3 py-2 bg-slate-50 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition focus:bg-white"
+                    >
+                </div>
+
+                <div class="sm:col-span-3 flex items-center gap-2">
+                    <button 
+                        type="submit" 
+                        id="btnSalvarPontoPartida" 
+                        class="w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white rounded-xl text-sm font-semibold shadow-sm transition flex items-center justify-center gap-2"
+                    >
+                        <i class="fa-solid fa-floppy-disk"></i> Salvar Ponto
+                    </button>
+
+                    <a 
+                        href="{% if ponto_partida and ponto_partida.plus_code %}https://www.google.com/maps/search/?api=1&query={{ ponto_partida.plus_code|urlencode }}{% else %}#{% endif %}" 
+                        target="_blank" 
+                        id="pontoPartidaMapsLink" 
+                        class="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl border border-slate-200 text-sm font-medium transition shrink-0 flex items-center justify-center {% if not ponto_partida or not ponto_partida.plus_code %}opacity-40 pointer-events-none{% endif %}"
+                        title="Ver Ponto de Partida no Google Maps"
+                    >
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+
         <!-- Barra de Ações e Filtro -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
             <div class="relative w-full md:w-96">
@@ -147,6 +245,71 @@
             setTimeout(() => {
                 toast.classList.add('hidden');
             }, 3500);
+        }
+
+        async function salvarPontoPartidaAjax(event) {
+            event.preventDefault();
+            const inputCode = document.getElementById('pontoPartidaInput');
+            const inputDesc = document.getElementById('pontoPartidaDesc');
+            const btn = document.getElementById('btnSalvarPontoPartida');
+            const mapsLink = document.getElementById('pontoPartidaMapsLink');
+
+            const plusCode = inputCode.value.trim();
+            const descricao = inputDesc.value.trim();
+
+            if (!plusCode) {
+                showToast('O Plus Code do ponto de partida é obrigatório.', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Salvando...';
+
+            try {
+                const response = await fetch('/api/v1/ponto-partida', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        plus_code: plusCode,
+                        descricao: descricao,
+                    }),
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showToast('Ponto de partida salvo com sucesso!');
+                    
+                    if (mapsLink) {
+                        mapsLink.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.plus_code)}`;
+                        mapsLink.classList.remove('opacity-40', 'pointer-events-none');
+                    }
+                } else {
+                    const err = await response.json();
+                    showToast(err.detail || 'Erro ao salvar ponto de partida.', 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Falha na comunicação com a API.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        }
+
+        function copiarEndpointApi() {
+            const rota = window.location.origin + '/api/v1/ponto-partida';
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(rota).then(() => {
+                    showToast('URL da API copiada: ' + rota);
+                }).catch(() => {
+                    prompt('Copie a URL da API:', rota);
+                });
+            } else {
+                prompt('Copie a URL da API:', rota);
+            }
         }
 
         async function salvarViaAjax(event, unidadeId) {

@@ -10,7 +10,7 @@ import urllib.parse
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from models import Unidade
+from models import Unidade, Configuracao
 
 logger = logging.getLogger("RotasService")
 
@@ -271,3 +271,63 @@ def atualizar_plus_code_curto(unidade_id: int, novo_codigo: str, db: Session) ->
     db.commit()
     db.refresh(unidade)
     return unidade
+
+
+CHAVE_PONTO_PARTIDA = "ponto_partida_plus_code"
+CHAVE_PONTO_PARTIDA_DESC = "ponto_partida_descricao"
+
+
+def obter_ponto_partida(db: Session) -> Dict[str, Any]:
+    """Retorna o Plus Code e a descrição do ponto de partida configurados no banco SQLite."""
+    cfg_code = db.query(Configuracao).filter(Configuracao.chave == CHAVE_PONTO_PARTIDA).first()
+    cfg_desc = db.query(Configuracao).filter(Configuracao.chave == CHAVE_PONTO_PARTIDA_DESC).first()
+
+    code = (cfg_code.valor if cfg_code and cfg_code.valor else "").strip()
+    desc = (cfg_desc.valor if cfg_desc and cfg_desc.valor else "Sede / Ponto de Partida Padrão").strip()
+    updated = cfg_code.updated_at if cfg_code else None
+
+    return {
+        "plus_code": code,
+        "ponto_partida": code,
+        "descricao": desc,
+        "updated_at": updated,
+    }
+
+
+def salvar_ponto_partida(db: Session, plus_code: str, descricao: Optional[str] = None) -> Dict[str, Any]:
+    """Cria ou atualiza o Plus Code do ponto de partida no banco SQLite."""
+    codigo_limpo = (plus_code or "").strip()
+    if not codigo_limpo:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="O Plus Code do ponto de partida não pode ser vazio.",
+        )
+
+    cfg_code = db.query(Configuracao).filter(Configuracao.chave == CHAVE_PONTO_PARTIDA).first()
+    if not cfg_code:
+        cfg_code = Configuracao(
+            chave=CHAVE_PONTO_PARTIDA,
+            valor=codigo_limpo,
+            descricao="Plus Code do ponto de partida padrão para cálculo de rotas",
+        )
+        db.add(cfg_code)
+    else:
+        cfg_code.valor = codigo_limpo
+
+    if descricao is not None:
+        desc_limpa = descricao.strip()
+        cfg_desc = db.query(Configuracao).filter(Configuracao.chave == CHAVE_PONTO_PARTIDA_DESC).first()
+        if not cfg_desc:
+            cfg_desc = Configuracao(
+                chave=CHAVE_PONTO_PARTIDA_DESC,
+                valor=desc_limpa,
+                descricao="Descrição ou identificação do ponto de partida",
+            )
+            db.add(cfg_desc)
+        else:
+            cfg_desc.valor = desc_limpa
+
+    db.commit()
+    db.refresh(cfg_code)
+    return obter_ponto_partida(db)
+

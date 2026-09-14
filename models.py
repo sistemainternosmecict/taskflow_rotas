@@ -19,3 +19,16 @@ class Unidade(Base):
 
     def __repr__(self) -> str:
         return f"<Unidade(id={self.id}, nome='{self.nome}', plus_code_curto='{self.plus_code_curto}')>"
+
+
+class Configuracao(Base):
+    __tablename__ = "configuracoes"
+
+    chave = Column(String(100), primary_key=True, index=True)
+    valor = Column(String(500), nullable=True)
+    descricao = Column(String(255), nullable=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self) -> str:
+        return f"<Configuracao(chave='{self.chave}', valor='{self.valor}')>"
+

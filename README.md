@@ -115,5 +115,53 @@ Content-Type: application/json
 
 ---
 
-### 5. Listar Unidades (`GET /api/unidades`)
+### 5. Listar Unidades (`GET /api/unidades` ou `GET /api/v1/unidades`)
 Retorna todas as unidades cadastradas no SQLite.
+
+---
+
+### 6. Obter Plus Code do Ponto de Partida (`GET /api/v1/ponto-partida`)
+Retorna o Plus Code configurado como ponto de partida (origem) para o cálculo automático de distâncias e roteirização no frontend.
+
+**Aliases disponíveis:**
+- `GET /api/v1/ponto-partida`
+- `GET /api/ponto-partida`
+
+**Resposta:**
+```json
+{
+  "plus_code": "4G3P+JM",
+  "ponto_partida": "4G3P+JM",
+  "descricao": "Sede da Secretaria de Educação",
+  "updated_at": "2026-09-02T15:32:50.903782"
+}
+```
+
+---
+
+### 7. Definir / Atualizar Ponto de Partida (`PUT /api/v1/ponto-partida`)
+Atualiza o Plus Code de partida no banco SQLite.
+
+**Aliases disponíveis:**
+- `PUT /api/v1/ponto-partida`
+- `POST /api/v1/ponto-partida`
+- `PUT /api/ponto-partida`
+
+**Requisição:**
+```json
+{
+  "plus_code": "4G3P+JM",
+  "descricao": "Sede da Secretaria de Educação"
+}
+```
+
+**Resposta:**
+```json
+{
+  "plus_code": "4G3P+JM",
+  "ponto_partida": "4G3P+JM",
+  "descricao": "Sede da Secretaria de Educação",
+  "updated_at": "2026-09-02T15:32:50.903782"
+}
+```
+
