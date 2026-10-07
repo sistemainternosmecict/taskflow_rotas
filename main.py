@@ -74,6 +74,7 @@ else:
         "*",
         "https://taskflow-frontend-pqok.onrender.com",
         "http://192.168.100.215:8081",
+        "http://192.168.100.215"
     ]
 
 app.add_middleware(
